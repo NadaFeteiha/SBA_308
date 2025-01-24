@@ -85,6 +85,8 @@ const LearnerSubmissions = [
 // Additionally, if the learner’s submission is late (submitted_at is past due_at), 
 // deduct 10 percent of the total points possible from their score for that assignment.
 
+const MAX_ASSIGNMENT_POINTS = 1000;
+
 function getLearnerData(course, AssignmentGp, submissions) {
     // Validate input to ensure that the AssignmentGroup belongs to the course
     if (AssignmentGp.course_id !== course.id) {
@@ -97,25 +99,42 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return submissions.find(submission => submission.learner_id === learnerId && submission.assignment_id === assignmentId);
     }
 
+    // check if the assignment is due
+    function isAssignmentDue(assignment) {
+        const dueDate = new Date(assignment.due_at);
+        const currentDate = new Date();
+        return currentDate >= dueDate;
+    }
+
+    function isAssignmentLate(submissionDate, DueDate) {
+        const submission = new Date(submissionDate);
+        const dueDate = new Date(DueDate);
+        return submission > dueDate;
+    }
+
     let LearnerSubmissions = [];
 
     for (let submission of submissions) {
         const assignment = AssignmentGp.assignments.find(assignment => assignment.id === submission.assignment_id);
 
-        if (assignment && assignment.points_possible > 0) {
-            const learnerSubmission = getLearnerSubmission(submission.learner_id, submission.assignment_id);
-            if (learnerSubmission) {
-                LearnerSubmissions.push({
-                    learner_id: submission.learner_id,
-                    assignment_id: submission.assignment_id,
-                    submission: learnerSubmission.submission
-                });
+        if (isAssignmentDue(assignment)) {
+            if (assignment.points_possible <= 0 || assignment.points_possible === undefined || assignment.points_possible >= MAX_ASSIGNMENT_POINTS) {
+                throw new Error(`Invalid input: ${assignment.name} has points_possible ${assignment.points_possible}`);
+            } else {
+                console.log(assignment)
+                
             }
-        } else {
-            console.log(`Invalid input: ${assignment.name} has points_possible ${assignment.points_possible}`);
+        }else{
+            console.log('Assignment not yet due');
+            // console.log(assignment)
         }
     }
 
+
+    // for testing
+    console.log(`not late same day = ${isAssignmentLate('2023-01-25', '2023-01-25')}`);
+    console.log(`not late ${isAssignmentLate('2023-01-25', '2023-01-28')}`);
+    console.log(`late ${isAssignmentLate('2023-01-25', '2023-01-24')}`);
 
     return LearnerSubmissions;
 }
