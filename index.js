@@ -112,7 +112,18 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return submission > dueDate;
     }
 
-    let LearnerSubmissions = [];
+    function calculateAverageScorePerAssigmnet(learnerScore, maxPointScore) {
+        return (learnerScore / maxPointScore) * 100;
+    }
+
+    // calculate the score for the assignment 
+    function calculateAssigmentScore(assignment, submission) {
+        let score = submission.score;
+        if (isAssignmentLate(submission.submitted_at, assignment.due_at)) {
+            score -= 0.1 * assignment.points_possible;
+        }
+        return score;
+    }
 
     for (let submission of submissions) {
         const assignment = AssignmentGp.assignments.find(assignment => assignment.id === submission.assignment_id);
@@ -130,12 +141,17 @@ function getLearnerData(course, AssignmentGp, submissions) {
         }
     }
 
-
-    // for testing
+    // for testing 
     console.log(`not late same day = ${isAssignmentLate('2023-01-25', '2023-01-25')}`);
     console.log(`not late ${isAssignmentLate('2023-01-25', '2023-01-28')}`);
     console.log(`late ${isAssignmentLate('2023-01-25', '2023-01-24')}`);
+    console.log("=====================================");
 
+    let score = calculateAssigmentScore(AssignmentGroup.assignments[0], LearnerSubmissions[0].submission); // 47 total points is 50 not late
+    console.log(` 47 total points is 50 not late = ${score}`);
+
+    console.log((39 + 125) / (50 + 150))
+    console.log((0.833+ 0.78)/2)
     return LearnerSubmissions;
 }
 
