@@ -89,10 +89,46 @@ const MAX_ASSIGNMENT_POINTS = 1000;
 
 function getLearnerData(course, AssignmentGp, submissions) {
     // Validate input to ensure that the AssignmentGroup belongs to the course
-    if (AssignmentGp.course_id !== course.id) {
-        throw new Error('Invalid input: AssignmentGroup does not belong to the course');
+
+
+    function validateData() {
+        if (AssignmentGp.course_id !== course.id) {
+            throw new Error('Invalid input: AssignmentGroup does not belong to the course');
+        }
+
+        // validate AssignmentGroup 
+        AssignmentGp.assignments.forEach(
+            assignment => {
+                // validate points_possible
+                if (assignment.points_possible == undefined || assignment.points_possible === 0 || assignment.points_possible > MAX_ASSIGNMENT_POINTS) {
+                    throw new Error('Invalid input: points_possible is 0');
+                }
+
+                // validate due_at
+                if (assignment.due_at == undefined || assignment.due_at === "" || !isCorrectFormatDate(assignment.due_at)) {
+                    throw new Error('Invalid input: due_at is undefined');
+                }
+            });
+
+        // validate LearnerSubmissions
+        submissions.forEach(
+            submission => {
+                // validate score
+                if (submission.submission.score == undefined || submission.submission.score > MAX_ASSIGNMENT_POINTS) {
+                    throw new Error('Invalid input: score');
+                }
+
+                // validate submitted_at
+                if (submission.submission.submitted_at == undefined || submission.submission.submitted_at === "" ) {
+                    throw new Error('Invalid input: submitted_at is undefined');
+                }
+            });
+
     }
 
+    function isCorrectFormatDate(date) {
+        return date.match(/^\d{4}-\d{2}-\d{2}$/) !== null;
+    }
 
     // Get the learner submission for each assignment in the AssignmentGroup
     function getLearnerSubmission(learnerId, assignmentId) {
@@ -125,21 +161,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return score;
     }
 
-    for (let submission of submissions) {
-        const assignment = AssignmentGp.assignments.find(assignment => assignment.id === submission.assignment_id);
 
-        if (isAssignmentDue(assignment)) {
-            if (assignment.points_possible <= 0 || assignment.points_possible === undefined || assignment.points_possible >= MAX_ASSIGNMENT_POINTS) {
-                throw new Error(`Invalid input: ${assignment.name} has points_possible ${assignment.points_possible}`);
-            } else {
-                console.log(assignment)
-                
-            }
-        }else{
-            console.log('Assignment not yet due');
-            // console.log(assignment)
-        }
-    }
 
     // for testing 
     console.log(`not late same day = ${isAssignmentLate('2023-01-25', '2023-01-25')}`);
@@ -151,7 +173,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
     console.log(` 47 total points is 50 not late = ${score}`);
 
     console.log((39 + 125) / (50 + 150))
-    console.log((0.833+ 0.78)/2)
+    console.log((0.833 + 0.78) / 2)
     return LearnerSubmissions;
 }
 
