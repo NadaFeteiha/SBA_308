@@ -88,9 +88,8 @@ const LearnerSubmissions = [
 const MAX_ASSIGNMENT_POINTS = 1000;
 
 function getLearnerData(course, AssignmentGp, submissions) {
-    // Validate input to ensure that the AssignmentGroup belongs to the course
 
-
+    // validate input 
     function validateData() {
         if (AssignmentGp.course_id !== course.id) {
             throw new Error('Invalid input: AssignmentGroup does not belong to the course');
@@ -119,13 +118,14 @@ function getLearnerData(course, AssignmentGp, submissions) {
                 }
 
                 // validate submitted_at
-                if (submission.submission.submitted_at == undefined || submission.submission.submitted_at === "" ) {
+                if (submission.submission.submitted_at == undefined || submission.submission.submitted_at === "") {
                     throw new Error('Invalid input: submitted_at is undefined');
                 }
             });
 
     }
 
+    // check if the date is in the correct format
     function isCorrectFormatDate(date) {
         return date.match(/^\d{4}-\d{2}-\d{2}$/) !== null;
     }
@@ -142,6 +142,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return currentDate >= dueDate;
     }
 
+    // check if the assignment is late than given due date
     function isAssignmentLate(submissionDate, DueDate) {
         const submission = new Date(submissionDate);
         const dueDate = new Date(DueDate);
@@ -149,7 +150,8 @@ function getLearnerData(course, AssignmentGp, submissions) {
     }
 
     function calculateAverageScorePerAssigmnet(learnerScore, maxPointScore) {
-        return (learnerScore / maxPointScore) * 100;
+        let averageScore = (learnerScore / maxPointScore);
+        return parseFloat(averageScore.toFixed(3));
     }
 
     // calculate the score for the assignment 
@@ -161,22 +163,52 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return score;
     }
 
+    try {
+        // First, validate the data
+        validateData();
 
+        // Second, filter out the assignments 
+        const assignments = AssignmentGp.assignments.filter(assignment => isAssignmentDue(assignment));
 
-    // for testing 
-    console.log(`not late same day = ${isAssignmentLate('2023-01-25', '2023-01-25')}`);
-    console.log(`not late ${isAssignmentLate('2023-01-25', '2023-01-28')}`);
-    console.log(`late ${isAssignmentLate('2023-01-25', '2023-01-24')}`);
-    console.log("=====================================");
+        // Third, get the list of learners ids
+        let learners = [];
+        LearnerSubmissions.forEach(submission => {
+            if (learners.length === 0 || !learners.includes(submission.learner_id)) {
+                learners.push(submission.learner_id);
+            }
+        });
 
-    let score = calculateAssigmentScore(AssignmentGroup.assignments[0], LearnerSubmissions[0].submission); // 47 total points is 50 not late
-    console.log(` 47 total points is 50 not late = ${score}`);
+        // Fourth: calculate the average score for each learner 
+        let result = [];
+        learners.forEach(learner => {
+            let learnerData = {
+                learner_id: learner,
+                average_score: 0
+            };
 
-    console.log((39 + 125) / (50 + 150))
-    console.log((0.833 + 0.78) / 2)
-    return LearnerSubmissions;
+            let totalLearnerScore = 0;
+            let totalMaxScore = 0;
+
+            assignments.forEach(assignment => {
+                const submission = getLearnerSubmission(learner, assignment.id);
+                if (submission) {
+                    totalLearnerScore += calculateAssigmentScore(assignment, submission.submission);
+                    totalMaxScore += assignment.points_possible;
+                    // console.log(`Learner: ${learner} Assignment: ${assignment.id} Score: ${submission.submission.score} MaxScore: ${assignment.points_possible}`);
+                    learnerData[assignment.id] = calculateAverageScorePerAssigmnet(submission.submission.score, assignment.points_possible);
+                }
+            });
+
+            learnerData.average_score = calculateAverageScorePerAssigmnet(totalLearnerScore, totalMaxScore);
+            result.push(learnerData);
+        });
+        return result;
+    } catch (error) {
+        console.log(error.message);
+    }
 }
 
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-
 console.log(result);
+
+
