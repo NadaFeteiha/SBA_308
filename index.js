@@ -14,7 +14,7 @@ const AssignmentGroup = {
         {
             id: 1,
             name: "Declare a Variable",
-            due_at: "2023/01/25",//"2023-01-25"
+            due_at: "2023/01/25",
             points_possible: 50
         },
         {
@@ -150,6 +150,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         return submission > dueDate;
     }
 
+    // calculate the average score for each assignment and round to 3 decimal places
     function calculateAverageScorePerAssigmnet(learnerScore, maxPointScore) {
         let averageScore = (learnerScore / maxPointScore);
         return parseFloat(averageScore.toFixed(3));
