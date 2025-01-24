@@ -14,7 +14,7 @@ const AssignmentGroup = {
         {
             id: 1,
             name: "Declare a Variable",
-            due_at: "2023-01-25",
+            due_at: "2023/01/25",//"2023-01-25"
             points_possible: 50
         },
         {
@@ -99,13 +99,13 @@ function getLearnerData(course, AssignmentGp, submissions) {
         AssignmentGp.assignments.forEach(
             assignment => {
                 // validate points_possible
-                if (assignment.points_possible == undefined || assignment.points_possible === 0 || assignment.points_possible > MAX_ASSIGNMENT_POINTS) {
-                    throw new Error('Invalid input: points_possible is 0');
+                if (assignment.points_possible == undefined || assignment.points_possible <= 0 || assignment.points_possible > MAX_ASSIGNMENT_POINTS) {
+                    throw new Error(`Invalid input: points_possible is ${assignment.points_possible}`);
                 }
 
                 // validate due_at
-                if (assignment.due_at == undefined || assignment.due_at === "" || !isCorrectFormatDate(assignment.due_at)) {
-                    throw new Error('Invalid input: due_at is undefined');
+                if (assignment.due_at == undefined || !isCorrectFormatDate(assignment.due_at)) {
+                    throw new Error(`Invalid input: due_at is ${assignment.due_at}`);
                 }
             });
 
@@ -118,8 +118,8 @@ function getLearnerData(course, AssignmentGp, submissions) {
                 }
 
                 // validate submitted_at
-                if (submission.submission.submitted_at == undefined || submission.submission.submitted_at === "") {
-                    throw new Error('Invalid input: submitted_at is undefined');
+                if (submission.submission.submitted_at == undefined || !isCorrectFormatDate(submission.submission.submitted_at)) {
+                    throw new Error(`Invalid input: submitted_at is ${submission.submission.submitted_at}`);
                 }
             });
 
@@ -127,7 +127,8 @@ function getLearnerData(course, AssignmentGp, submissions) {
 
     // check if the date is in the correct format
     function isCorrectFormatDate(date) {
-        return date.match(/^\d{4}-\d{2}-\d{2}$/) !== null;
+        // check if the date is in the format yyyy-mm-dd or yyyy/mm/dd and is a valid date
+        return (date.match(/^\d{4}-\d{2}-\d{2}$/) !== null || date.match(/^\d{4}\/\d{2}\/\d{2}$/) !== null) && !isNaN(new Date(date).getTime());
     }
 
     // Get the learner submission for each assignment in the AssignmentGroup
@@ -171,7 +172,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         const assignments = AssignmentGp.assignments.filter(assignment => isAssignmentDue(assignment));
 
         // Third, get the list of learners ids
-        let learners = [];
+        const learners = [];
         LearnerSubmissions.forEach(submission => {
             if (learners.length === 0 || !learners.includes(submission.learner_id)) {
                 learners.push(submission.learner_id);
@@ -179,11 +180,11 @@ function getLearnerData(course, AssignmentGp, submissions) {
         });
 
         // Fourth: calculate the average score for each learner 
-        let result = [];
+        const result = [];
         learners.forEach(learner => {
             let learnerData = {
                 learner_id: learner,
-                average_score: 0
+                average: 0
             };
 
             let totalLearnerScore = 0;
@@ -192,19 +193,22 @@ function getLearnerData(course, AssignmentGp, submissions) {
             assignments.forEach(assignment => {
                 const submission = getLearnerSubmission(learner, assignment.id);
                 if (submission) {
-                    totalLearnerScore += calculateAssigmentScore(assignment, submission.submission);
+                    // calculate the score for the assignment see if it is late
+                    let assignmentScore = calculateAssigmentScore(assignment, submission.submission);
+                    learnerData[assignment.id] = calculateAverageScorePerAssigmnet(assignmentScore, assignment.points_possible);
+
+                    // calculate the total score for the learner
+                    totalLearnerScore += assignmentScore;
                     totalMaxScore += assignment.points_possible;
-                    // console.log(`Learner: ${learner} Assignment: ${assignment.id} Score: ${submission.submission.score} MaxScore: ${assignment.points_possible}`);
-                    learnerData[assignment.id] = calculateAverageScorePerAssigmnet(submission.submission.score, assignment.points_possible);
                 }
             });
 
-            learnerData.average_score = calculateAverageScorePerAssigmnet(totalLearnerScore, totalMaxScore);
+            learnerData.average = calculateAverageScorePerAssigmnet(totalLearnerScore, totalMaxScore);
             result.push(learnerData);
         });
         return result;
     } catch (error) {
-        console.log(error.message);
+        return (`Error: ${error.message}`);
     }
 }
 
