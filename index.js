@@ -147,6 +147,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         });
     }
 
+    // check if the date is greater than today
     function greaterThanToday(strDat) {
         let today = new Date();
         let date = new Date(strDat);
@@ -197,7 +198,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         validateData();
 
         // Second, filter out the assignments 
-        const assignments = AssignmentGp.assignments.filter(assignment => isAssignmentDue(assignment));
+        // const assignments = AssignmentGp.assignments.filter(assignment => isAssignmentDue(assignment));
 
         // Third, get the list of learners ids
         const learners = [];
@@ -218,7 +219,13 @@ function getLearnerData(course, AssignmentGp, submissions) {
             let totalLearnerScore = 0;
             let totalMaxScore = 0;
 
-            assignments.forEach(assignment => {
+            for (let i = 0; i < AssignmentGp.assignments.length; i++) {
+                const assignment = AssignmentGp.assignments[i];
+                // Skip assignment if it is not due yet
+                if (!isAssignmentDue(assignment)) {
+                    continue;
+                }
+
                 const submission = getLearnerSubmission(learner, assignment.id);
                 if (submission) {
                     // calculate the score for the assignment see if it is late
@@ -229,7 +236,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
                     totalLearnerScore += assignmentScore;
                     totalMaxScore += assignment.points_possible;
                 }
-            });
+            }
 
             learnerData.average = calculateAverageScorePerAssigmnet(totalLearnerScore, totalMaxScore);
             result.push(learnerData);
@@ -242,5 +249,4 @@ function getLearnerData(course, AssignmentGp, submissions) {
 
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 console.log(result);
-
 
