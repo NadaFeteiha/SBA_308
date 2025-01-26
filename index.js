@@ -91,7 +91,9 @@ function getLearnerData(course, AssignmentGp, submissions) {
 
     // validate input 
     function validateData() {
-        if (AssignmentGp.course_id !== course.id) {
+
+        // validate CourseInfo
+        if (course.id !== undefined && AssignmentGp.course_id !== undefined && AssignmentGp.course_id !== course.id) {
             throw new Error('Invalid input: AssignmentGroup does not belong to the course');
         }
 
@@ -123,8 +125,33 @@ function getLearnerData(course, AssignmentGp, submissions) {
                 }
             });
 
+        // Validate learnerSubmissions data
+        LearnerSubmissions.forEach(submission => {
+            // check if the learner_id and assignment_id are numbers
+            if (typeof submission.learner_id !== "number" || typeof submission.assignment_id !== "number") {
+                throw new Error("Invalid LearnerSubmission data.");
+            } // check if the submission is an object
+            else if (submission.submission === undefined || submission.submission.submitted_at === undefined || submission.submission.score === undefined) {
+                throw new Error("Invalid LearnerSubmission data.");
+            }// check if the score is a number and is between 0 and Max points
+            else if (typeof submission.submission.score !== "number" || submission.submission.score < 0 || submission.submission.score > MAX_ASSIGNMENT_POINTS) {
+                throw new Error("Invalid LearnerSubmission data.");
+            } // check if the date is in the correct format
+            else if (!isCorrectFormatDate(submission.submission.submitted_at)) {
+                throw new Error("Invalid LearnerSubmission data.");
+            } // check if submitted_at is not greater than today!! 
+            // not make sense that student submit in the future !!
+            else if (greaterThanToday(submission.submission.submitted_at)) {
+                throw new Error("Invalid LearnerSubmission data.");
+            }
+        });
     }
 
+    function greaterThanToday(strDat) {
+        let today = new Date();
+        let date = new Date(strDat);
+        return date > today;
+    }
     // check if the date is in the correct format
     function isCorrectFormatDate(date) {
         // check if the date is in the format yyyy-mm-dd or yyyy/mm/dd and is a valid date
