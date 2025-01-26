@@ -197,10 +197,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
         // First, validate the data
         validateData();
 
-        // Second, filter out the assignments 
-        // const assignments = AssignmentGp.assignments.filter(assignment => isAssignmentDue(assignment));
-
-        // Third, get the list of learners ids
+        // Second, get the list of learners ids
         const learners = [];
         LearnerSubmissions.forEach(submission => {
             if (learners.length === 0 || !learners.includes(submission.learner_id)) {
@@ -208,7 +205,7 @@ function getLearnerData(course, AssignmentGp, submissions) {
             }
         });
 
-        // Fourth: calculate the average score for each learner 
+        // Third: calculate the average score for each learner 
         const result = [];
         learners.forEach(learner => {
             let learnerData = {
